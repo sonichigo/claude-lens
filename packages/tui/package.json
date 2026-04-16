@@ -1,0 +1,12 @@
+{
+  "name": "@tokenlens/tui",
+  "version": "0.1.0",
+  "description": "Terminal UI for TokenLens",
+  "type": "module",
+  "main": "src/index.js",
+  "dependencies": {
+    "@tokenlens/core": "workspace:*",
+    "ink": "^5.0.1",
+    "react": "^18.3.1"
+  }
+}

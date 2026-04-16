@@ -1,0 +1,11 @@
+{
+  "name": "@tokenlens/web",
+  "version": "0.1.0",
+  "description": "Web dashboard for TokenLens",
+  "type": "module",
+  "main": "src/server.js",
+  "dependencies": {
+    "@tokenlens/core": "workspace:*",
+    "ws": "^8.18.0"
+  }
+}

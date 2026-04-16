@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TokenLens · dashboard</title>
+<style>
+  :root {
+    --bg: #1a1410;
+    --bg-panel: #201812;
+    --bg-deep: #140f0c;
+    --bg-raised: #2a1e14;
+    --orange: #ff8c32;
+    --orange-light: #ffb366;
+    --orange-dim: #c96820;
+    --text: #f0ead6;
+    --text-dim: #888;
+    --text-faint: #666;
+    --green: #7dd87d;
+    --border: rgba(255, 140, 50, 0.12);
+    --border-accent: rgba(255, 140, 50, 0.35);
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+  body { min-height: 100vh; }
+  .app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+  aside { background: var(--bg-deep); border-right: 1px solid var(--border); padding: 24px 0; }
+  .logo { font-family: var(--mono); color: var(--orange); font-weight: 600; font-size: 16px; padding: 0 24px 20px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+  nav { padding: 0 12px; }
+  nav a { display: block; padding: 9px 14px; color: var(--text-dim); font-size: 13px; border-radius: 6px; text-decoration: none; margin-bottom: 2px; cursor: pointer; transition: all 0.15s; }
+  nav a:hover { color: var(--text); background: rgba(255, 140, 50, 0.05); }
+  nav a.active { background: rgba(255, 140, 50, 0.12); color: var(--orange); }
+  nav a.active::before { content: '▸ '; }
+  .byline { padding: 20px 24px; margin-top: auto; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 11px; color: var(--text-faint); }
+  .byline b { color: var(--orange); font-weight: 400; }
+  main { padding: 28px 32px; overflow-y: auto; }
+  .head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+  .title { font-family: var(--mono); color: var(--orange); font-size: 20px; font-weight: 600; letter-spacing: 0.5px; }
+  .title .sub { color: var(--text-faint); }
+  .subtitle { color: var(--text-dim); font-size: 12px; margin-top: 4px; font-family: var(--mono); }
+  .actions { display: flex; gap: 8px; }
+  .btn { background: transparent; color: var(--orange); border: 1px solid var(--border-accent); padding: 7px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: var(--mono); transition: all 0.15s; }
+  .btn:hover { background: rgba(255, 140, 50, 0.08); }
+  .btn.primary { background: rgba(255, 140, 50, 0.12); }
+  .card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; }
+  .card.accent { border-color: var(--border-accent); background: linear-gradient(180deg, rgba(255, 140, 50, 0.06), rgba(255, 140, 50, 0.01)); }
+  .label { font-family: var(--mono); color: var(--text-dim); font-size: 10.5px; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 12px; }
+  .row-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px; }
+  .stat .v { font-family: var(--mono); color: var(--orange); font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+  .stat .l { color: var(--text-dim); font-size: 11px; margin-top: 4px; font-family: var(--mono); }
+  .stat .d { color: var(--green); font-size: 11px; margin-top: 2px; font-family: var(--mono); }
+  .hero { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .bar { height: 10px; background: var(--bg-raised); border-radius: 100px; overflow: hidden; }
+  .bar > span { display: block; height: 100%; background: linear-gradient(90deg, var(--orange), var(--orange-light)); border-radius: 100px; transition: width 0.4s ease; }
+  .lv { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+  .lv-badge { width: 56px; height: 56px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, var(--orange-light), var(--orange)); color: var(--bg); font-family: var(--mono); font-weight: 700; font-size: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 28px rgba(255, 140, 50, 0.35); flex-shrink: 0; }
+  .lv-info { flex: 1; }
+  .lv-info .n { color: var(--text); font-size: 16px; font-weight: 600; }
+  .lv-info .x { color: var(--text-dim); font-size: 12px; font-family: var(--mono); margin-top: 2px; }
+  .streak { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 12px; }
+  .streak-day { aspect-ratio: 1; border-radius: 5px; background: var(--bg-raised); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 11px; color: var(--text-faint); }
+  .streak-day.filled { background: var(--orange); color: var(--bg); font-weight: 600; }
+  .streak-day.today { background: var(--orange-light); color: var(--bg); font-weight: 600; box-shadow: 0 0 0 2px rgba(255, 140, 50, 0.3); }
+  .streak-msg { font-family: var(--mono); color: var(--orange-light); font-size: 12px; margin-top: 12px; text-align: center; }
+  .boss .big { font-family: var(--mono); color: var(--orange); font-size: 22px; font-weight: 700; }
+  .boss .big .dim { color: var(--text-faint); font-size: 13px; font-weight: 400; }
+  .bar-caption { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; color: var(--text-dim); margin: 12px 0 8px; }
+  .boss-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; font-family: var(--mono); font-size: 11px; }
+  .boss-meta .k { color: var(--text-faint); }
+  .boss-meta .v { color: var(--orange-light); font-weight: 500; }
+  .two-col { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .chart { height: 200px; background: var(--bg-deep); border-radius: 8px; margin-top: 10px; padding: 12px; }
+  .quests { font-size: 13px; }
+  .quest { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed rgba(255, 140, 50, 0.1); }
+  .quest:last-child { border-bottom: none; }
+  .quest .n { color: var(--text); }
+  .quest .r { font-family: var(--mono); color: var(--orange-light); font-size: 11px; }
+  .quest.done .n { color: var(--green); text-decoration: line-through; opacity: 0.7; }
+  .ach-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 6px; }
+  .ach { background: var(--bg-deep); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+  .ach.unlocked { border-color: var(--border-accent); background: rgba(255, 140, 50, 0.06); }
+  .ach .icon { font-family: var(--mono); color: var(--orange); font-size: 20px; margin-bottom: 6px; }
+  .ach.locked .icon { color: #3d2a1a; }
+  .ach .name { color: var(--text); font-size: 13px; font-weight: 600; }
+  .ach.locked .name { color: var(--text-dim); }
+  .ach .desc { color: var(--text-dim); font-size: 11px; margin-top: 4px; line-height: 1.4; }
+  .feed { font-family: var(--mono); font-size: 12px; line-height: 1.9; }
+  .feed .t { color: var(--text-faint); }
+  .feed .dot { color: var(--green); }
+  .feed .star { color: var(--orange); }
+  .feed .tool { color: var(--orange-light); }
+  .feed .tok { color: var(--text-faint); }
+  .ticker { font-family: var(--mono); font-size: 11.5px; color: var(--text-dim); padding: 10px 20px; background: var(--bg-deep); border-top: 1px solid var(--border); display: flex; gap: 28px; flex-wrap: wrap; }
+  .ticker b { color: var(--orange); font-weight: 600; }
+  .ticker .live { color: var(--green); }
+  .pulse { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--green); margin-right: 6px; animation: pulse 1.4s ease-in-out infinite; vertical-align: middle; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .toast { position: fixed; top: 24px; right: 24px; background: var(--bg-panel); border: 1px solid var(--border-accent); border-radius: 10px; padding: 14px 18px; box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 28px rgba(255, 140, 50, 0.25); display: none; z-index: 100; animation: slideIn 0.3s ease; }
+  .toast.show { display: block; }
+  .toast .t-label { color: var(--orange); font-family: var(--mono); font-size: 11px; letter-spacing: 1.2px; }
+  .toast .t-name { color: var(--text); font-size: 15px; font-weight: 600; margin-top: 4px; }
+  .toast .t-desc { color: var(--text-dim); font-size: 12px; margin-top: 2px; }
+  @keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  @media (max-width: 900px) {
+    .app { grid-template-columns: 1fr; }
+    aside { display: none; }
+    .row-4, .hero, .two-col { grid-template-columns: 1fr; }
+    .ach-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside>
+    <div class="logo">◉ TokenLens</div>
+    <nav>
+      <a class="active">overview</a>
+      <a>quests</a>
+      <a>achievements</a>
+      <a>sessions</a>
+      <a>projects</a>
+      <a>costs</a>
+      <a>settings</a>
+    </nav>
+    <div class="byline">made by <b>sonichigo</b></div>
+  </aside>
+
+  <main>
+    <div class="head">
+      <div>
+        <div class="title">TokenLens<span class="sub"> · overview</span></div>
+        <div class="subtitle" id="last-update">connecting…</div>
+      </div>
+      <div class="actions">
+        <button class="btn" onclick="location.reload()">refresh</button>
+        <a class="btn primary" href="https://github.com/sonichigo/tokenlens" target="_blank" rel="noopener">★ star on github</a>
+      </div>
+    </div>
+
+    <!-- Hero: level + boss fight -->
+    <div class="hero">
+      <div class="card accent">
+        <div class="lv">
+          <div class="lv-badge" id="lv-badge">1</div>
+          <div class="lv-info">
+            <div class="n" id="lv-title">Apprentice Prompter</div>
+            <div class="x" id="lv-xp">0 / 500 XP to Lv.2</div>
+            <div class="bar" style="margin-top: 10px;"><span id="lv-bar" style="width: 0%;"></span></div>
+          </div>
+        </div>
+        <div class="streak" id="streak-strip">
+          <div class="streak-day">M</div>
+          <div class="streak-day">T</div>
+          <div class="streak-day">W</div>
+          <div class="streak-day">T</div>
+          <div class="streak-day">F</div>
+          <div class="streak-day">S</div>
+          <div class="streak-day today">S</div>
+        </div>
+        <div class="streak-msg" id="streak-msg">🔥 0-day streak · start today</div>
+      </div>
+
+      <div class="card boss">
+        <div class="label">BOSS · 5-HOUR BLOCK</div>
+        <div class="big"><span id="boss-cost">$0.00</span> <span class="dim">/ $5.85</span></div>
+        <div class="bar-caption"><span>HP <span id="boss-hp">0</span>%</span><span id="boss-reset">resets in —</span></div>
+        <div class="bar"><span id="boss-bar" style="width: 0%;"></span></div>
+        <div class="boss-meta">
+          <div><div class="k">cache hit</div><div class="v" id="boss-cache">—</div></div>
+          <div><div class="k">projected</div><div class="v" id="boss-proj">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stat row -->
+    <div class="row-4">
+      <div class="stat"><div class="v" id="s-events">0</div><div class="l">events today</div><div class="d" id="s-events-d">—</div></div>
+      <div class="stat"><div class="v" id="s-tokens">0</div><div class="l">tokens today</div><div class="d" id="s-tokens-d">—</div></div>
+      <div class="stat"><div class="v" id="s-saved">$0.00</div><div class="l">saved by cache</div><div class="d" id="s-saved-d">—</div></div>
+      <div class="stat"><div class="v" id="s-xp">0</div><div class="l">XP earned today</div><div class="d" id="s-xp-d">—</div></div>
+    </div>
+
+    <!-- Chart + quests -->
+    <div class="two-col">
+      <div class="card">
+        <div class="label">XP OVER TIME · LAST 7 DAYS</div>
+        <div class="chart"><svg id="chart-svg" viewBox="0 0 500 180" preserveAspectRatio="none" style="width:100%; height:100%;"></svg></div>
+      </div>
+      <div class="card">
+        <div class="label">DAILY QUESTS</div>
+        <div class="quests" id="quests-list"></div>
+      </div>
+    </div>
+
+    <!-- Achievements -->
+    <div class="card" style="margin-bottom: 16px;">
+      <div class="label">ACHIEVEMENTS</div>
+      <div class="ach-grid" id="ach-grid"></div>
+    </div>
+
+    <!-- Live feed -->
+    <div class="card">
+      <div class="label">LIVE FEED</div>
+      <div class="feed" id="feed"></div>
+    </div>
+  </main>
+</div>
+
+<div class="ticker">
+  <span><span class="pulse"></span><b class="live">live</b></span>
+  <span>in <b id="t-in">0</b></span>
+  <span>out <b id="t-out">0</b></span>
+  <span>cache <b id="t-cache">0</b></span>
+  <span>today <b id="t-cost">$0.00</b></span>
+  <span>streak <b id="t-streak">🔥 0</b></span>
+  <span>XP <b id="t-xp">0</b></span>
+</div>
+
+<div class="toast" id="toast">
+  <div class="t-label">★ ACHIEVEMENT UNLOCKED</div>
+  <div class="t-name" id="toast-name">—</div>
+  <div class="t-desc" id="toast-desc">—</div>
+</div>
+
+<script>
+  const ACHIEVEMENTS = {
+    first_session: { name: 'First Steps', desc: 'Logged your first session', icon: '◉' },
+    cache_connoisseur: { name: 'Cache Connoisseur', desc: '90% cache-hit ratio in a session', icon: '★' },
+    night_owl: { name: 'Night Owl', desc: 'Coded between midnight and 5am on 5 days', icon: '☾' },
+    one_shot_wonder: { name: 'One-Shot Wonder', desc: 'Session completed in under 10 minutes', icon: '⚡' },
+    haiku_master: { name: 'Haiku Master', desc: '50 tasks routed to Haiku', icon: '◇' },
+    frugal_coder: { name: 'Frugal Coder', desc: 'Kept weekly spend under $20', icon: '◈' },
+    refactor_king: { name: 'Refactor King', desc: '100 Edit tool calls in a day', icon: '⚒' },
+    streak_7: { name: 'Week Warrior', desc: '7-day coding streak', icon: '🔥' },
+    streak_30: { name: 'Iron Habit', desc: '30-day coding streak', icon: '⚔' },
+    polyglot: { name: 'Polyglot', desc: 'Used all three tools in one week', icon: '✦' },
+  };
+
+  function formatTokens(n) {
+    if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(0) + 'k';
+    return String(n || 0);
+  }
+
+  function renderLevel(level) {
+    document.getElementById('lv-badge').textContent = level.level;
+    document.getElementById('lv-title').textContent = level.title;
+    document.getElementById('lv-xp').textContent =
+      `${level.intoLevel.toLocaleString()} / ${level.needed.toLocaleString()} XP to Lv.${level.level + 1}`;
+    document.getElementById('lv-bar').style.width = `${Math.round(level.progress * 100)}%`;
+  }
+
+  function renderStreak(days) {
+    const strip = document.getElementById('streak-strip');
+    const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    strip.innerHTML = '';
+    const filledCount = Math.min(7, days);
+    for (let i = 0; i < 7; i++) {
+      const div = document.createElement('div');
+      div.className = 'streak-day';
+      div.textContent = labels[i];
+      // Fill rightmost N days including today
+      if (i >= 7 - filledCount) div.classList.add('filled');
+      if (i === 6) {
+        div.classList.remove('filled');
+        div.classList.add('today');
+      }
+      strip.appendChild(div);
+    }
+    document.getElementById('streak-msg').textContent =
+      days > 0 ? `🔥 ${days}-day streak · keep it going` : `start your streak today`;
+  }
+
+  function renderBoss(todayStats) {
+    const cost = todayStats.reduce((s, r) => s + (r.cost || 0), 0);
+    const pct = Math.min(1, cost / 5.85);
+    document.getElementById('boss-cost').textContent = '$' + cost.toFixed(2);
+    document.getElementById('boss-hp').textContent = Math.round(pct * 100);
+    document.getElementById('boss-bar').style.width = `${pct * 100}%`;
+    const now = new Date();
+    const utc = now.getUTCHours();
+    const nextBlockHour = Math.ceil((utc + 1) / 5) * 5;
+    const ms = (nextBlockHour * 3600 - (utc * 3600 + now.getUTCMinutes() * 60)) * 1000;
+    const mins = Math.floor(ms / 60000);
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    document.getElementById('boss-reset').textContent = `resets in ${h}h ${m}m`;
+    const cacheTotal = todayStats.reduce((s, r) => s + (r.cache_read_tokens || 0), 0);
+    const inputTotal = todayStats.reduce((s, r) => s + (r.input_tokens || 0), 0);
+    const hit = cacheTotal + inputTotal > 0 ? cacheTotal / (cacheTotal + inputTotal) : 0;
+    document.getElementById('boss-cache').textContent = `⚡ ${(hit * 100).toFixed(0)}%`;
+    document.getElementById('boss-proj').textContent = `${Math.min(100, Math.round(pct * 130))}%`;
+  }
+
+  function renderStats(snap) {
+    const events = snap.todayStats.reduce((s, r) => s + (r.events || 0), 0);
+    const tokens = snap.todayStats.reduce((s, r) => s + (r.input_tokens || 0) + (r.output_tokens || 0), 0);
+    const cache = snap.todayStats.reduce((s, r) => s + (r.cache_read_tokens || 0), 0);
+    // Rough cost-saved estimate: cache reads priced at 0.3 vs 3.0 per Mtok = 2.7 saved
+    const saved = cache * 2.7 / 1e6;
+    document.getElementById('s-events').textContent = events.toLocaleString();
+    document.getElementById('s-tokens').textContent = formatTokens(tokens);
+    document.getElementById('s-saved').textContent = '$' + saved.toFixed(2);
+    document.getElementById('s-xp').textContent = snap.totalXp.toLocaleString();
+    document.getElementById('s-events-d').textContent = events > 0 ? 'active session' : 'no activity yet';
+    document.getElementById('s-tokens-d').textContent = tokens > 0 ? `across ${snap.todayStats.length} tools` : '—';
+    document.getElementById('s-saved-d').textContent = cache > 0 ? `${formatTokens(cache)} cache reads` : '—';
+    document.getElementById('s-xp-d').textContent = snap.level.title;
+  }
+
+  function renderChart(recent) {
+    // Bucket last 7 days
+    const now = Date.now();
+    const day = 24 * 60 * 60 * 1000;
+    const buckets = new Array(7).fill(0);
+    for (const e of recent) {
+      const age = Math.floor((now - e.timestamp) / day);
+      if (age >= 0 && age < 7) buckets[6 - age] += (e.input_tokens || 0) + (e.output_tokens || 0);
+    }
+    const max = Math.max(...buckets, 1);
+    const w = 500, h = 180, padB = 30;
+    const points = buckets.map((v, i) => {
+      const x = (i / 6) * w;
+      const y = (h - padB) - (v / max) * (h - padB - 20);
+      return [x, y];
+    });
+    const pathLine = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0]},${p[1]}`).join(' ');
+    const pathArea = pathLine + ` L${w},${h - padB} L0,${h - padB} Z`;
+    const labels = ['6d','5d','4d','3d','2d','1d','now'];
+    const svg = `
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#ff8c32" stop-opacity="0.4"/>
+          <stop offset="100%" stop-color="#ff8c32" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <path d="${pathArea}" fill="url(#g)"/>
+      <path d="${pathLine}" fill="none" stroke="#ff8c32" stroke-width="2"/>
+      ${points.map((p, i) =>
+        `<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="#ffb366"/>` +
+        `<text x="${p[0]}" y="${h - 10}" font-family="monospace" font-size="10" fill="#666" text-anchor="middle">${labels[i]}</text>`
+      ).join('')}
+    `;
+    document.getElementById('chart-svg').innerHTML = svg;
+  }
+
+  function renderQuests(quests) {
+    const list = document.getElementById('quests-list');
+    list.innerHTML = quests.map(q =>
+      `<div class="quest"><span class="n">${q.name}</span><span class="r">+${q.xp} XP</span></div>`
+    ).join('');
+  }
+
+  function renderAchievements(unlocked) {
+    const unlockedIds = new Set(unlocked.map(u => u.id));
+    const grid = document.getElementById('ach-grid');
+    grid.innerHTML = Object.entries(ACHIEVEMENTS).map(([id, meta]) => {
+      const ok = unlockedIds.has(id);
+      return `<div class="ach ${ok ? 'unlocked' : 'locked'}">
+        <div class="icon">${ok ? meta.icon : '◇'}</div>
+        <div class="name">${meta.name}</div>
+        <div class="desc">${meta.desc}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderFeed(recent) {
+    const feed = document.getElementById('feed');
+    if (!recent.length) {
+      feed.innerHTML = '<div style="color: var(--text-dim);">waiting for activity…</div>';
+      return;
+    }
+    feed.innerHTML = recent.slice(0, 6).map(e => {
+      const t = new Date(e.timestamp);
+      const hh = String(t.getHours()).padStart(2, '0');
+      const mm = String(t.getMinutes()).padStart(2, '0');
+      const tok = (e.input_tokens || 0) + (e.output_tokens || 0);
+      return `<div><span class="t">${hh}:${mm}</span> <span class="dot">●</span> <span class="tool">${e.tool_name || 'response'}</span> ${escapeHtml(e.project_path || '').split('/').slice(-1)[0] || '—'} <span class="tok">· ${formatTokens(tok)} tok</span></div>`;
+    }).join('');
+  }
+
+  function renderTicker(snap) {
+    const stats = snap.todayStats;
+    const inTok = stats.reduce((s, r) => s + (r.input_tokens || 0), 0);
+    const outTok = stats.reduce((s, r) => s + (r.output_tokens || 0), 0);
+    const cacheTok = stats.reduce((s, r) => s + (r.cache_read_tokens || 0), 0);
+    const cost = stats.reduce((s, r) => s + (r.cost || 0), 0);
+    document.getElementById('t-in').textContent = formatTokens(inTok);
+    document.getElementById('t-out').textContent = formatTokens(outTok);
+    document.getElementById('t-cache').textContent = formatTokens(cacheTok);
+    document.getElementById('t-cost').textContent = '$' + cost.toFixed(2);
+    document.getElementById('t-streak').textContent = '🔥 ' + snap.streak;
+    document.getElementById('t-xp').textContent = snap.totalXp.toLocaleString();
+  }
+
+  function showToast(id) {
+    const meta = ACHIEVEMENTS[id];
+    if (!meta) return;
+    document.getElementById('toast-name').textContent = `${meta.icon} ${meta.name}`;
+    document.getElementById('toast-desc').textContent = meta.desc;
+    const el = document.getElementById('toast');
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 5000);
+  }
+
+  function render(snap) {
+    document.getElementById('last-update').textContent =
+      'real-time dashboard · last update ' + new Date().toLocaleTimeString();
+    renderLevel(snap.level);
+    renderStreak(snap.streak);
+    renderBoss(snap.todayStats);
+    renderStats(snap);
+    renderChart(snap.recent);
+    renderQuests(snap.quests);
+    renderAchievements(snap.achievements);
+    renderFeed(snap.recent);
+    renderTicker(snap);
+  }
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  // Connect
+  async function boot() {
+    try {
+      const snap = await fetch('/api/snapshot').then(r => r.json());
+      render(snap);
+    } catch (err) {
+      document.getElementById('last-update').textContent = 'failed to connect to daemon';
+      return;
+    }
+
+    const ws = new WebSocket(`ws://${location.host}/ws`);
+    ws.onmessage = (msg) => {
+      const pkt = JSON.parse(msg.data);
+      if (pkt.type === 'snapshot') render(pkt.data);
+      if (pkt.snap) render(pkt.snap);
+      if (pkt.type === 'achievement') showToast(pkt.data.id);
+    };
+    ws.onclose = () => setTimeout(boot, 2000); // auto-reconnect
+  }
+
+  boot();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "name": "tokenlens-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Real-time token meter for AI coding agents (Claude Code, Codex, Cursor)",
+  "author": "sonichigo",
+  "license": "MIT",
+  "packageManager": "pnpm@9.0.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev:tui": "pnpm --filter @tokenlens/tui dev",
+    "dev:web": "pnpm --filter @tokenlens/web dev",
+    "start": "node packages/cli/bin/tokenlens.js",
+    "test": "pnpm -r test"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

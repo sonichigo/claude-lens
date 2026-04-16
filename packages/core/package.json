@@ -1,0 +1,15 @@
+{
+  "name": "@tokenlens/core",
+  "version": "0.1.0",
+  "description": "Core watcher, adapters, storage for TokenLens",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "node --test src/**/*.test.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "chokidar": "^4.0.1",
+    "nanoid": "^5.0.7"
+  }
+}
